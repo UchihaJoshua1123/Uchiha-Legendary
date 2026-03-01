@@ -38,3 +38,12 @@ It will create `output/report_YYYYMMDD_HHMMSS.pdf` and send it as an email attac
 ```bash
 python3 -m unittest -v
 ```
+
+
+## HTML setup helper
+
+Open `index.html` in your browser to generate a `.env` file with SMTP settings, then run:
+
+```bash
+set -a && source .env && set +a && python3 pdf_emailer.py
+```
