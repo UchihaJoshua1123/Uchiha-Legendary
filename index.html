@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PDF Email Sender Setup</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --panel: #111827;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --accent: #22c55e;
+        --border: #374151;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        background: linear-gradient(145deg, #020617, #111827 55%);
+        color: var(--text);
+      }
+      .container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 1rem;
+      }
+      .card {
+        background: rgba(17, 24, 39, 0.92);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+      h1 { margin-top: 0; font-size: 1.6rem; }
+      p { color: var(--muted); }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.8rem;
+      }
+      label {
+        display: block;
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+      }
+      input, select, textarea {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.55rem 0.65rem;
+        background: #030712;
+        color: var(--text);
+      }
+      textarea { min-height: 160px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.8rem; }
+      button {
+        border: 0;
+        border-radius: 8px;
+        padding: 0.6rem 0.9rem;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .primary { background: var(--accent); color: #052e16; }
+      .secondary { background: #1f2937; color: var(--text); border: 1px solid var(--border); }
+      .help { font-size: 0.9rem; color: var(--muted); }
+      .note {
+        border-left: 3px solid #f59e0b;
+        padding-left: 0.75rem;
+      }
+      code { color: #86efac; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <h1>PDF Email Sender Helper</h1>
+        <p>
+          Fill in your SMTP settings below and click <strong>Generate .env</strong>.
+          This page helps you prepare settings for <code>pdf_emailer.py</code>.
+        </p>
+        <p class="help note">
+          Browser pages cannot safely send SMTP credentials directly. This HTML file is a setup helper; the actual send is done by the Python script.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="grid">
+          <div>
+            <label for="host">SMTP_HOST</label>
+            <input id="host" placeholder="smtp.gmail.com" />
+          </div>
+          <div>
+            <label for="port">SMTP_PORT</label>
+            <input id="port" value="587" />
+          </div>
+          <div>
+            <label for="user">SMTP_USER</label>
+            <input id="user" placeholder="you@example.com" />
+          </div>
+          <div>
+            <label for="pass">SMTP_PASS</label>
+            <input id="pass" type="password" placeholder="app-password" />
+          </div>
+          <div>
+            <label for="from">SMTP_FROM (optional)</label>
+            <input id="from" placeholder="you@example.com" />
+          </div>
+          <div>
+            <label for="to">SMTP_TO</label>
+            <input id="to" placeholder="recipient@example.com" />
+          </div>
+          <div>
+            <label for="ssl">SMTP_USE_SSL</label>
+            <select id="ssl">
+              <option value="false" selected>false</option>
+              <option value="true">true</option>
+            </select>
+          </div>
+          <div>
+            <label for="starttls">SMTP_USE_STARTTLS</label>
+            <select id="starttls">
+              <option value="true" selected>true</option>
+              <option value="false">false</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="generate">Generate .env</button>
+          <button class="secondary" id="copy">Copy output</button>
+          <button class="secondary" id="download">Download .env</button>
+        </div>
+
+        <label for="output" style="margin-top:0.8rem;">Generated content</label>
+        <textarea id="output" readonly></textarea>
+      </div>
+
+      <div class="card">
+        <h2>Run command</h2>
+        <p class="help">After saving this as <code>.env</code> in the repo root, run:</p>
+        <pre><code>set -a && source .env && set +a && python3 pdf_emailer.py</code></pre>
+      </div>
+    </div>
+
+    <script>
+      const fields = {
+        host: document.getElementById('host'),
+        port: document.getElementById('port'),
+        user: document.getElementById('user'),
+        pass: document.getElementById('pass'),
+        from: document.getElementById('from'),
+        to: document.getElementById('to'),
+        ssl: document.getElementById('ssl'),
+        starttls: document.getElementById('starttls'),
+      };
+      const output = document.getElementById('output');
+
+      function quote(v) {
+        return String(v ?? '').replace(/"/g, '\\"');
+      }
+
+      function buildEnv() {
+        const smtpFrom = fields.from.value.trim() || fields.user.value.trim();
+        return [
+          `SMTP_HOST="${quote(fields.host.value.trim())}"`,
+          `SMTP_PORT="${quote(fields.port.value.trim() || '587')}"`,
+          `SMTP_USER="${quote(fields.user.value.trim())}"`,
+          `SMTP_PASS="${quote(fields.pass.value)}"`,
+          `SMTP_FROM="${quote(smtpFrom)}"`,
+          `SMTP_TO="${quote(fields.to.value.trim())}"`,
+          `SMTP_USE_SSL="${fields.ssl.value}"`,
+          `SMTP_USE_STARTTLS="${fields.starttls.value}"`,
+          ''
+        ].join('\n');
+      }
+
+      document.getElementById('generate').addEventListener('click', () => {
+        output.value = buildEnv();
+      });
+
+      document.getElementById('copy').addEventListener('click', async () => {
+        if (!output.value.trim()) output.value = buildEnv();
+        await navigator.clipboard.writeText(output.value);
+      });
+
+      document.getElementById('download').addEventListener('click', () => {
+        if (!output.value.trim()) output.value = buildEnv();
+        const blob = new Blob([output.value], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '.env';
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    </script>
+  </body>
+</html>
